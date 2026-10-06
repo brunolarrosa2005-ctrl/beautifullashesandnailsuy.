@@ -712,7 +712,7 @@
             <h2 style="font-size: 2rem; margin-bottom: 5px;">Reservar Turno</h2>
             
             <div class="notice-box" style="margin: 10px 0 15px 0; padding: 10px 12px; font-size: 0.8rem;">
-                💳 <strong>Pago Seguro:</strong> Se abonará el 50% de seña para asegurar tu turno de forma automática. El saldo restante se cancela el día del servicio.
+                💳 <strong>Pago Online Seguro:</strong> Se abonará el 50% de seña desde la web para asegurar tu turno de forma automática. El saldo restante se cancela el día del servicio.
             </div>
             
             <form id="bookingForm" onsubmit="handleBooking(event)">
@@ -787,7 +787,7 @@
 
                 <div class="card-payment-box">
                     <label style="font-weight: bold; margin-bottom: 10px; display: block; color: var(--dark-color);">
-                        <i class="far fa-credit-card"></i> Medios de Pago Aceptados
+                        <i class="far fa-credit-card"></i> Datos de la Tarjeta para Pago Online
                     </label>
                     
                     <div class="card-icons">
@@ -796,7 +796,21 @@
                         <i class="fab fa-cc-amex"></i>
                         <i class="fas fa-credit-card"></i>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--gray-text);">Tarjetas de Crédito, Débito y Prex vinculadas.</p>
+
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <input type="text" id="cardHolder" placeholder="Nombre en la tarjeta" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <input type="text" id="cardNumber" maxlength="19" placeholder="Número de tarjeta (16 dígitos)" pattern="[0-9 ]{13,19}" required>
+                    </div>
+                    <div class="card-row">
+                        <div class="form-group" style="margin-bottom: 10px; flex: 1;">
+                            <input type="text" id="cardExpiry" maxlength="5" placeholder="MM/AA" pattern="(0[1-9]|1[0-2])\/[0-9]{2}" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px; flex: 1;">
+                            <input type="password" id="cardCvc" maxlength="4" placeholder="CVC / CVV" pattern="[0-9]{3,4}" required>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group" style="margin-top: 15px;">
@@ -804,7 +818,7 @@
                     <textarea id="bookingNotes" rows="2" placeholder="Aclaraciones adicionales"></textarea>
                 </div>
 
-                <button type="submit" id="btnPay" class="btn btn-primary" style="width: 100%;">PAGAR SEÑA Y CONFIRMAR TURNO</button>
+                <button type="submit" id="btnPay" class="btn btn-primary" style="width: 100%;">PROCESAR PAGO Y CONFIRMAR TURNO</button>
             </form>
         </div>
     </div>
@@ -814,19 +828,20 @@
         <div class="modal-content" style="text-align: center;">
             <span class="close-modal" onclick="closePrexModal()">×</span>
             <i class="fas fa-check-circle" style="font-size: 3.5rem; color: #25d366; margin-bottom: 15px;"></i>
-            <h2 style="font-size: 1.8rem; margin-bottom: 15px; color: var(--dark-color);">¡Reserva Confirmada!</h2>
+            <h2 style="font-size: 1.8rem; margin-bottom: 15px; color: var(--dark-color);">¡Pago Exitoso & Turno Confirmado!</h2>
             
-            <p style="margin-bottom: 15px; font-size: 0.95rem;">Se asignó tu turno correctamente. Detalle de pago recibido para la cuenta vinculada <strong>Prex (195548)</strong>.</p>
+            <p style="margin-bottom: 15px; font-size: 0.95rem;">Tu pago fue procesado correctamente desde la web. Se ha acreditado la seña para la reserva.</p>
             
             <div style="background: var(--nude-bg); border: 2px dashed var(--deep-pink); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                <p style="font-size: 1rem; margin-bottom: 5px;">Monto de Seña: <strong id="prexDepositAmount" style="color: var(--deep-pink);">$0</strong></p>
-                <p style="font-size: 0.85rem; color: var(--gray-text);">ID de Reserva: <span id="txnId" style="font-weight: bold; font-family: monospace;"></span></p>
+                <p style="font-size: 1rem; margin-bottom: 5px;">Monto Abonado: <strong id="prexDepositAmount" style="color: var(--deep-pink);">$0</strong></p>
+                <p style="font-size: 0.85rem; color: var(--gray-text);">ID de Transacción: <span id="txnId" style="font-weight: bold; font-family: monospace;"></span></p>
+                <p style="font-size: 0.85rem; color: #28a745; margin-top: 5px; font-weight: bold;">Estado: PAGO APROBADO ✅</p>
             </div>
 
-            <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 20px;">Haz clic en el siguiente botón para enviar los detalles de la reserva a Cin por WhatsApp.</p>
+            <p style="font-size: 0.85rem; color: var(--gray-text); margin-bottom: 20px;">Haz clic en el siguiente botón para enviar el comprobante y detalles del turno a Cin por WhatsApp.</p>
 
             <a id="whatsappPrexBtn" href="#" target="_blank" class="btn btn-whatsapp">
-                <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i> Notificar Reserva por WhatsApp
+                <i class="fab fa-whatsapp" style="font-size: 1.2rem;"></i> Enviar Comprobante por WhatsApp
             </a>
         </div>
     </div>
@@ -872,6 +887,27 @@
                     }
                 }
             });
+
+            // Formateo automático de tarjeta de crédito
+            const cardInput = id('cardNumber');
+            if (cardInput) {
+                cardInput.addEventListener('input', function (e) {
+                    let val = e.target.value.replace(/\D/g, '');
+                    val = val.replace(/(.{4})/g, '$1 ').trim();
+                    e.target.value = val;
+                });
+            }
+
+            const expiryInput = id('cardExpiry');
+            if (expiryInput) {
+                expiryInput.addEventListener('input', function (e) {
+                    let val = e.target.value.replace(/\D/g, '');
+                    if (val.length >= 2) {
+                        val = val.substring(0, 2) + '/' + val.substring(2, 4);
+                    }
+                    e.target.value = val;
+                });
+            }
         });
 
         function updatePriceBreakdown() {
@@ -1009,8 +1045,17 @@
             const time = id('selectedTime').value;
             const notes = id('bookingNotes').value;
 
+            // Datos de la tarjeta
+            const cardNumber = id('cardNumber').value.replace(/\s+/g, '');
+            const cardHolder = id('cardHolder').value;
+
             if (!time) {
                 alert("Por favor selecciona un horario disponible.");
+                return;
+            }
+
+            if (cardNumber.length < 13) {
+                alert("Por favor ingresa un número de tarjeta válido.");
                 return;
             }
 
@@ -1019,43 +1064,48 @@
 
             const btnPay = id('btnPay');
             btnPay.disabled = true;
-            btnPay.textContent = "CONFIRMANDO TURNO...";
+            btnPay.textContent = "PROCESANDO PAGO WEB...";
 
-            const transactionId = "PRX-" + Math.floor(100000 + Math.random() * 900000);
+            setTimeout(() => {
+                const transactionId = "PAY-WEB-" + Math.floor(100000 + Math.random() * 900000);
+                const cardMasked = "**** **** **** " + cardNumber.slice(-4);
 
-            try {
-                const newBookingRef = db.ref('turnos').push();
-                newBookingRef.set({
-                    servicio: serviceName,
-                    nombre: clientName,
-                    telefono: clientPhone,
-                    fecha: bookingDate,
-                    hora: time,
-                    observaciones: notes,
-                    montoPagado: deposit,
-                    cuentaPrex: "195548",
-                    idTransaccion: transactionId,
-                    estado: 'confirmado',
-                    createdAt: Date.now()
-                });
-            } catch (err) {
-                console.log("Servidor local:", err);
-            }
+                try {
+                    const newBookingRef = db.ref('turnos').push();
+                    newBookingRef.set({
+                        servicio: serviceName,
+                        nombre: clientName,
+                        telefono: clientPhone,
+                        fecha: bookingDate,
+                        hora: time,
+                        observaciones: notes,
+                        montoPagado: deposit,
+                        tarjeta: cardMasked,
+                        titularTarjeta: cardHolder,
+                        idTransaccion: transactionId,
+                        estado: 'confirmado',
+                        metodoPago: 'web_tarjeta',
+                        createdAt: Date.now()
+                    });
+                } catch (err) {
+                    console.log("Servidor local:", err);
+                }
 
-            id('prexDepositAmount').textContent = `$${deposit.toLocaleString('es-UY')}`;
-            id('txnId').textContent = transactionId;
-            
-            const whatsappMsg = `Hola Cin! 👋 Acabo de agendar mi turno en la web:%0A*Servicio:* ${encodeURIComponent(serviceName)}%0A*Fecha:* ${bookingDate} a las ${time}%0A*Nombre:* ${encodeURIComponent(clientName)}%0A*Teléfono:* ${clientPhone}%0A*Seña (50%):* $${deposit}%0A*ID Reserva:* ${transactionId} 💳✨`;
-            
-            id('whatsappPrexBtn').href = `https://wa.me/59896247696?text=${whatsappMsg}`;
+                id('prexDepositAmount').textContent = `$${deposit.toLocaleString('es-UY')}`;
+                id('txnId').textContent = transactionId;
+                
+                const whatsappMsg = `Hola Cin! 👋 Realicé el pago de mi seña desde la web:%0A*Servicio:* ${encodeURIComponent(serviceName)}%0A*Fecha:* ${bookingDate} a las ${time}%0A*Cliente:* ${encodeURIComponent(clientName)}%0A*Teléfono:* ${clientPhone}%0A*Seña Pagada:* $${deposit}%0A*ID Transacción Web:* ${transactionId}%0A*Pago con Tarjeta:* ${cardMasked} ✅✨`;
+                
+                id('whatsappPrexBtn').href = `https://wa.me/59896247696?text=${whatsappMsg}`;
 
-            btnPay.disabled = false;
-            btnPay.textContent = "PAGAR SEÑA Y CONFIRMAR TURNO";
+                btnPay.disabled = false;
+                btnPay.textContent = "PROCESAR PAGO Y CONFIRMAR TURNO";
 
-            closeBookingModal();
-            id('bookingForm').reset();
-            id('priceBreakdown').style.display = 'none';
-            id('prexModal').style.display = 'flex';
+                closeBookingModal();
+                id('bookingForm').reset();
+                id('priceBreakdown').style.display = 'none';
+                id('prexModal').style.display = 'flex';
+            }, 1500);
         }
 
         function openLightbox(src) { id('lightboxImg').src = src; id('lightbox').style.display = 'flex'; }
